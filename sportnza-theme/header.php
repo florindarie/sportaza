@@ -20,14 +20,14 @@
                 <a href="<?php echo esc_url( home_url( '/category/sports/' ) ); ?>" class="nav-link<?php if ( is_category( 'sports' ) ) echo ' active'; ?>">
                     <?php echo esc_html( sportnza_t( 'Sports' ) ); ?>
                 </a>
-                <a href="<?php echo esc_url( home_url( '/category/academy/' ) ); ?>" class="nav-link<?php if ( is_category( 'academy' ) ) echo ' active'; ?>">
-                    <?php echo esc_html( sportnza_t( 'Academy' ) ); ?>
+                <a href="<?php echo esc_url( home_url( '/category/casino/' ) ); ?>" class="nav-link<?php if ( is_category( 'casino' ) ) echo ' active'; ?>">
+                    <?php echo esc_html( sportnza_t( 'Casino' ) ); ?>
                 </a>
-                <a href="<?php echo esc_url( home_url( '/category/promotions/' ) ); ?>" class="nav-link<?php if ( is_category( 'promotions' ) ) echo ' active'; ?>">
+                <a href="<?php echo esc_url( home_url( '/promotions/' ) ); ?>" class="nav-link<?php if ( is_page( 'promotions' ) ) echo ' active'; ?>">
                     <?php echo esc_html( sportnza_t( 'Promotions' ) ); ?>
                 </a>
-                <a href="<?php echo esc_url( home_url( '/category/news/' ) ); ?>" class="nav-link<?php if ( is_category( 'news' ) ) echo ' active'; ?>">
-                    <?php echo esc_html( sportnza_t( 'News' ) ); ?>
+                <a href="<?php echo esc_url( home_url( '/about/' ) ); ?>" class="nav-link<?php if ( is_page( 'about' ) ) echo ' active'; ?>">
+                    <?php echo esc_html( sportnza_t( 'More' ) ); ?>
                 </a>
             </nav>
 
@@ -45,7 +45,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <a href="#" class="btn btn-green btn-skew"><span><?php echo esc_html( sportnza_t( 'Join Now' ) ); ?></span></a>
+                <a href="https://sportaza.com/gc/" class="btn btn-green btn-skew"><span><?php echo esc_html( sportnza_t( 'Join Now' ) ); ?></span></a>
             </div>
 
             <button class="mobile-menu-btn" aria-label="<?php echo esc_attr( sportnza_t( 'Toggle menu' ) ); ?>">

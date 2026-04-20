@@ -1,5 +1,13 @@
 {
+  "scripts": {
+    "dev": "wp-now start --path=./sportnza-theme",
+    "build": "node export-static.js",
+    "encrypt": "node encrypt-pages.js",
+    "serve": "npx serve docs",
+    "deploy": "npm run build && npm run encrypt"
+  },
   "devDependencies": {
+    "@wp-now/wp-now": "^0.1.74",
     "staticrypt": "^3.5.4"
   }
 }

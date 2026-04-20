@@ -108,26 +108,86 @@ add_action( 'init', function() {
     update_option( 'page_on_front', $home_page );
 
     // ─── Create categories ──────────────────────────────────────────
-    $categories = array(
-        'Sports'     => 'sports',
-        'Academy'    => 'academy',
-        'Promotions' => 'promotions',
-        'News'       => 'news',
+       // ─── Create categories + subcategories ─────────────────────────
+    $category_structure = array(
+        'sports' => array(
+            'name'     => 'Sports',
+            'children' => array(
+                'soccer'            => 'Soccer',
+                'hockey'            => 'Hockey',
+                'basketball'        => 'Basketball',
+                'american-football' => 'American Football',
+                'tennis'            => 'Tennis',
+                'other'             => 'Other',
+            ),
+        ),
+        'casino' => array(
+            'name'     => 'Casino',
+            'children' => array(
+                'slots'       => 'Slots',
+                'blackjack'   => 'Blackjack',
+                'roulette'    => 'Roulette',
+                'poker'       => 'Poker',
+                'table-games' => 'Table Games',
+            ),
+        ),
+        'promotions' => array(
+            'name'     => 'Promotions',
+            'children' => array(),
+        ),
     );
 
     $cat_ids = array();
-    foreach ( $categories as $name => $slug ) {
-        $term = term_exists( $slug, 'category' );
+
+    foreach ( $category_structure as $parent_slug => $parent_data ) {
+        $term = term_exists( $parent_slug, 'category' );
+
         if ( ! $term ) {
-            $term = wp_insert_term( $name, 'category', array( 'slug' => $slug ) );
+            $term = wp_insert_term(
+                $parent_data['name'],
+                'category',
+                array(
+                    'slug' => $parent_slug,
+                )
+            );
         }
+
         if ( ! is_wp_error( $term ) ) {
-            $cat_ids[ $slug ] = is_array( $term ) ? $term['term_id'] : $term;
+            $parent_id = is_array( $term ) ? $term['term_id'] : $term;
+            $cat_ids[ $parent_slug ] = (int) $parent_id;
+
+            foreach ( $parent_data['children'] as $child_slug => $child_name ) {
+                $child_term = term_exists( $child_slug, 'category' );
+
+                if ( ! $child_term ) {
+                    $child_term = wp_insert_term(
+                        $child_name,
+                        'category',
+                        array(
+                            'slug'   => $child_slug,
+                            'parent' => $parent_id,
+                        )
+                    );
+                } else {
+                    $child_term_id = is_array( $child_term ) ? $child_term['term_id'] : $child_term;
+                    wp_update_term(
+                        $child_term_id,
+                        'category',
+                        array(
+                            'parent' => $parent_id,
+                        )
+                    );
+                }
+
+                if ( ! is_wp_error( $child_term ) ) {
+                    $cat_ids[ $child_slug ] = is_array( $child_term ) ? $child_term['term_id'] : $child_term;
+                }
+            }
         }
     }
 
     // ─── Create tags ────────────────────────────────────────────────
-    $tags = array( 'NBA', 'NFL', 'NHL', 'Hockey', 'Fantasy', 'Strategy', 'Golf', 'Betting' );
+    $tags = array( 'NBA', 'NFL', 'NHL', 'Hockey', 'Fantasy', 'Strategy', 'Golf', 'Betting', 'Casino', 'Slots' );
     $tag_ids = array();
     foreach ( $tags as $tag_name ) {
         $tag = term_exists( $tag_name, 'post_tag' );
@@ -188,16 +248,16 @@ add_action( 'init', function() {
         'pga'               => sportnza_upload_image( $images_dir, 'pga.jpg' ),
     );
 
-    // ─── Create posts ───────────────────────────────────────────────
+    // ─── Create posts in new categories ────────────────────────────
 
-    // Sports category posts
+    // SPORTS
     $post1 = wp_insert_post( array(
         'post_title'    => 'NBA Analytics: Breaking Down the Numbers That Matter',
         'post_excerpt'  => 'Dive deep into advanced statistics and probability models that can give you the edge in NBA betting.',
         'post_content'  => '<p>In the world of sports betting, data is king. Advanced analytics have transformed how we understand basketball, and savvy bettors are leveraging these insights to make more informed decisions.</p><p>From player efficiency ratings to pace-adjusted statistics, the numbers tell a story that the eye test alone cannot capture. Understanding these metrics can be the difference between a winning and losing strategy.</p><p>In this deep dive, we break down the key statistical models that professional analysts use to evaluate NBA games, including expected value calculations, regression models, and real-time probability assessments.</p>',
         'post_status'   => 'publish',
         'post_date'     => '2026-02-06 10:00:00',
-        'post_category' => array( $cat_ids['sports'] ),
+        'post_category' => array( $cat_ids['sports'], $cat_ids['basketball'] ),
         'tags_input'    => array( 'NBA', 'Betting' ),
     ) );
     if ( $images['nba'] ) set_post_thumbnail( $post1, $images['nba'] );
@@ -208,7 +268,7 @@ add_action( 'init', function() {
         'post_content'  => '<p>The conference championships represent some of the most exciting betting opportunities of the NFL season. With only four teams remaining, every detail matters.</p><p>Our comprehensive guide covers point spreads, over/under totals, player props, and live betting strategies for both the AFC and NFC championship games.</p>',
         'post_status'   => 'publish',
         'post_date'     => '2026-02-05 10:00:00',
-        'post_category' => array( $cat_ids['sports'] ),
+        'post_category' => array( $cat_ids['sports'], $cat_ids['american-football'] ),
         'tags_input'    => array( 'NFL', 'Betting' ),
     ) );
     if ( $images['nfl'] ) set_post_thumbnail( $post2, $images['nfl'] );
@@ -219,19 +279,18 @@ add_action( 'init', function() {
         'post_content'  => '<p>With the NHL regular season in full swing, futures markets are constantly shifting. Smart bettors know that finding value early can lead to significant payoffs.</p><p>We analyze the top contenders, sleeper picks, and the metrics that matter most when evaluating Stanley Cup odds.</p>',
         'post_status'   => 'publish',
         'post_date'     => '2026-02-04 10:00:00',
-        'post_category' => array( $cat_ids['sports'] ),
+        'post_category' => array( $cat_ids['sports'], $cat_ids['hockey'] ),
         'tags_input'    => array( 'NHL', 'Hockey' ),
     ) );
     if ( $images['stanley_cup'] ) set_post_thumbnail( $post3, $images['stanley_cup'] );
 
-    // Academy category posts
     $post4 = wp_insert_post( array(
         'post_title'    => 'Fantasy Hockey: Finding Sleeper Picks for Value',
         'post_excerpt'  => 'Uncovering hidden gems that can win your fantasy hockey league this season.',
-        'post_content'  => '<p>Fantasy hockey success often hinges on finding undervalued players. Whether you\'re drafting or working the waiver wire, identifying sleepers before they break out is key.</p><p>We highlight the players flying under the radar who could deliver elite production at a fraction of the cost.</p>',
+        'post_content'  => '<p>Fantasy hockey success often hinges on finding undervalued players. Whether you are drafting or working the waiver wire, identifying sleepers before they break out is key.</p><p>We highlight the players flying under the radar who could deliver elite production at a fraction of the cost.</p>',
         'post_status'   => 'publish',
         'post_date'     => '2026-02-06 08:00:00',
-        'post_category' => array( $cat_ids['academy'] ),
+        'post_category' => array( $cat_ids['sports'], $cat_ids['hockey'] ),
         'tags_input'    => array( 'Fantasy', 'Hockey' ),
     ) );
     if ( $images['fantasy_nhl'] ) set_post_thumbnail( $post4, $images['fantasy_nhl'] );
@@ -242,13 +301,97 @@ add_action( 'init', function() {
         'post_content'  => '<p>One of the most important skills in fantasy sports management is recognizing when a player\'s current production is unsustainable. Selling high at the right time can transform your roster.</p><p>We analyze the key indicators that suggest a player is due for regression and the optimal trade strategies to capitalize.</p>',
         'post_status'   => 'publish',
         'post_date'     => '2026-02-05 08:00:00',
-        'post_category' => array( $cat_ids['academy'] ),
+        'post_category' => array( $cat_ids['sports'], $cat_ids['other'] ),
         'tags_input'    => array( 'Strategy', 'Fantasy' ),
     ) );
     if ( $images['fantasy_sell_high'] ) set_post_thumbnail( $post5, $images['fantasy_sell_high'] );
 
-    // Promotions category posts
     $post6 = wp_insert_post( array(
+        'post_title'    => 'PGA Tour Analytics: Data-Driven Approach to Golf Betting',
+        'post_excerpt'  => 'How strokes gained metrics and course history can predict tournament outcomes with surprising accuracy.',
+        'post_content'  => '<p>Golf betting has been revolutionized by advanced analytics, particularly the strokes gained framework. By breaking down performance into specific categories we can build predictive models with impressive accuracy.</p><p>Course history is another critical factor. Some players consistently perform well at certain venues due to course design, grass types, altitude, and weather patterns that suit their game.</p><p>In this comprehensive analysis, we combine strokes gained data with course-specific metrics to identify the best value picks for upcoming PGA Tour events.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-03 07:00:00',
+        'post_category' => array( $cat_ids['sports'], $cat_ids['other'] ),
+        'tags_input'    => array( 'Golf' ),
+    ) );
+    if ( $images['pga'] ) set_post_thumbnail( $post6, $images['pga'] );
+
+    $post7 = wp_insert_post( array(
+        'post_title'    => 'Regional Betting Insights: Know Your Local Teams',
+        'post_excerpt'  => 'Why local knowledge gives you the edge in sports betting and how to leverage it.',
+        'post_content'  => '<p>When it comes to sports betting, local knowledge can be your greatest asset. Understanding team dynamics, fan culture, travel schedules, and venue-specific factors gives you insights that national analysts often miss.</p><p>In this guide, we explore how regional expertise translates into better betting decisions.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-02 09:00:00',
+        'post_category' => array( $cat_ids['sports'], $cat_ids['other'] ),
+        'tags_input'    => array( 'Betting' ),
+    ) );
+    if ( $images['local_hubs_1'] ) set_post_thumbnail( $post7, $images['local_hubs_1'] );
+
+    $post8 = wp_insert_post( array(
+        'post_title'    => 'The Rivalry That Defined a Nation: Senators vs Maple Leafs',
+        'post_excerpt'  => 'Exploring the intense history between two Canadian hockey giants and what it means for betting.',
+        'post_content'  => '<p>Few rivalries in hockey carry the weight and passion of Senators vs Maple Leafs. Rooted in Canadian identity and decades of competition, this matchup transcends the sport.</p><p>From regular season battles to playoff wars, we trace the history and intensity that makes this one of hockey\'s greatest rivalries.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-06 09:00:00',
+        'post_category' => array( $cat_ids['sports'], $cat_ids['hockey'] ),
+        'tags_input'    => array( 'Hockey' ),
+    ) );
+    if ( $images['local_hubs_2'] ) set_post_thumbnail( $post8, $images['local_hubs_2'] );
+
+    // CASINO
+    $post9 = wp_insert_post( array(
+        'post_title'    => 'Top Slots Features Players Look for in 2026',
+        'post_excerpt'  => 'From bonus rounds to volatility, here is what makes modern slot games stand out.',
+        'post_content'  => '<p>Slots continue to dominate the casino experience thanks to their variety, pace, and rewarding mechanics. Players are paying closer attention to RTP, volatility, and feature depth than ever before.</p><p>In this guide, we break down the most important elements that shape today\'s slot experience.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-06 11:00:00',
+        'post_category' => array( $cat_ids['casino'], $cat_ids['slots'] ),
+        'tags_input'    => array( 'Casino', 'Slots' ),
+    ) );
+
+    $post10 = wp_insert_post( array(
+        'post_title'    => 'Blackjack Basics: Smart Decisions at the Table',
+        'post_excerpt'  => 'A simple look at core blackjack principles every player should understand.',
+        'post_content'  => '<p>Blackjack remains one of the most strategy-driven casino games. While luck always matters, making better decisions on hits, stands, doubles, and splits can improve your long-term results.</p><p>This article covers the essentials in a beginner-friendly way.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-05 11:00:00',
+        'post_category' => array( $cat_ids['casino'], $cat_ids['blackjack'] ),
+        'tags_input'    => array( 'Casino' ),
+    ) );
+
+    $post11 = wp_insert_post( array(
+        'post_title'    => 'Live Roulette: Why Real-Time Tables Keep Growing',
+        'post_excerpt'  => 'Live roulette combines classic gameplay with the energy of a real casino environment.',
+        'post_content'  => '<p>Live roulette brings players closer to the casino floor by combining real dealers, live streams, and immersive table action.</p><p>We look at why the format continues to attract both experienced and casual players.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-04 11:00:00',
+        'post_category' => array( $cat_ids['casino'], $cat_ids['roulette'] ),
+        'tags_input'    => array( 'Casino' ),
+    ) );
+
+    $post12 = wp_insert_post( array(
+        'post_title'    => 'Poker Room Trends: What Online Players Want Most',
+        'post_excerpt'  => 'Faster formats, cleaner UX, and better rewards are shaping online poker.',
+        'post_content'  => '<p>Online poker keeps evolving with new tournament formats, quicker gameplay, and player-focused features. The modern poker audience expects both flexibility and value.</p><p>These are the trends shaping the next wave of poker experiences.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-03 11:00:00',
+        'post_category' => array( $cat_ids['casino'], $cat_ids['poker'] ),
+        'tags_input'    => array( 'Casino' ),
+    ) );
+
+    $post13 = wp_insert_post( array(
+        'post_title'    => 'Classic Table Games That Never Go Out of Style',
+        'post_excerpt'  => 'From baccarat to blackjack, table games remain a cornerstone of online casino play.',
+        'post_content'  => '<p>Table games continue to define the classic casino experience. Their simple rules, elegant presentation, and strategic depth make them timeless.</p><p>This piece explores why players keep coming back to traditional table action.</p>',
+        'post_status'   => 'publish',
+        'post_date'     => '2026-02-02 11:00:00',
+        'post_category' => array( $cat_ids['casino'], $cat_ids['table-games'] ),
+        'tags_input'    => array( 'Casino' ),
+    ) );
+
+    // PROMOTIONS
+    $post14 = wp_insert_post( array(
         'post_title'    => 'Saturday Night Hockey Special: Best Bets & Bonuses',
         'post_excerpt'  => 'Our top picks for the best Saturday night hockey betting opportunities plus exclusive bonuses.',
         'post_content'  => '<p>Saturday night hockey is a tradition, and it also presents some of the best betting opportunities of the week. With a full slate of games, the options are endless.</p><p>Our experts break down the top bets, including moneylines, puck lines, and prop bets for the featured matchups. Plus, check out our exclusive Saturday night bonuses.</p>',
@@ -257,41 +400,7 @@ add_action( 'init', function() {
         'post_category' => array( $cat_ids['promotions'] ),
         'tags_input'    => array( 'NHL', 'Betting' ),
     ) );
-    if ( $images['saturday_hockey'] ) set_post_thumbnail( $post6, $images['saturday_hockey'] );
-
-    // News category posts
-    $post7 = wp_insert_post( array(
-        'post_title'    => 'The Rivalry That Defined a Nation: Senators vs Maple Leafs',
-        'post_excerpt'  => 'Exploring the intense history between two Canadian hockey giants and what it means for betting.',
-        'post_content'  => '<p>Few rivalries in hockey carry the weight and passion of Senators vs Maple Leafs. Rooted in Canadian identity and decades of competition, this matchup transcends the sport.</p><p>From regular season battles to playoff wars, we trace the history and intensity that makes this one of hockey\'s greatest rivalries.</p>',
-        'post_status'   => 'publish',
-        'post_date'     => '2026-02-06 09:00:00',
-        'post_category' => array( $cat_ids['news'] ),
-        'tags_input'    => array( 'Hockey' ),
-    ) );
-    if ( $images['local_hubs_2'] ) set_post_thumbnail( $post7, $images['local_hubs_2'] );
-
-    $post8 = wp_insert_post( array(
-        'post_title'    => 'PGA Tour Analytics: Data-Driven Approach to Golf Betting',
-        'post_excerpt'  => 'How strokes gained metrics and course history can predict tournament outcomes with surprising accuracy.',
-        'post_content'  => '<p>Golf betting has been revolutionized by advanced analytics, particularly the strokes gained framework. By breaking down performance into specific categories we can build predictive models with impressive accuracy.</p><p>Course history is another critical factor. Some players consistently perform well at certain venues due to course design, grass types, altitude, and weather patterns that suit their game.</p><p>In this comprehensive analysis, we combine strokes gained data with course-specific metrics to identify the best value picks for upcoming PGA Tour events.</p>',
-        'post_status'   => 'publish',
-        'post_date'     => '2026-02-03 07:00:00',
-        'post_category' => array( $cat_ids['news'] ),
-        'tags_input'    => array( 'Golf' ),
-    ) );
-    if ( $images['pga'] ) set_post_thumbnail( $post8, $images['pga'] );
-
-    $post9 = wp_insert_post( array(
-        'post_title'    => 'Regional Betting Insights: Know Your Local Teams',
-        'post_excerpt'  => 'Why local knowledge gives you the edge in sports betting and how to leverage it.',
-        'post_content'  => '<p>When it comes to sports betting, local knowledge can be your greatest asset. Understanding team dynamics, fan culture, travel schedules, and venue-specific factors gives you insights that national analysts often miss.</p><p>In this guide, we explore how regional expertise translates into better betting decisions.</p>',
-        'post_status'   => 'publish',
-        'post_date'     => '2026-02-02 09:00:00',
-        'post_category' => array( $cat_ids['news'] ),
-        'tags_input'    => array( 'Betting' ),
-    ) );
-    if ( $images['local_hubs_1'] ) set_post_thumbnail( $post9, $images['local_hubs_1'] );
+    if ( $images['saturday_hockey'] ) set_post_thumbnail( $post14, $images['saturday_hockey'] );
 
     // ─── Set up Customizer (hero uses theme asset directly) ────────
     set_theme_mod( 'sportnza_hero_bg', SPORTNZA_URI . '/assets/images/hero-banner.jpg' );

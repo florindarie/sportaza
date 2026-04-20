@@ -14,9 +14,14 @@ get_header();
     <div class="hero-background">
         <img src="<?php echo esc_url( SPORTNZA_URI . '/assets/images/hero-banner.jpg' ); ?>" alt="<?php echo esc_attr( sportnza_t( 'About Sportaza' ) ); ?>">
     </div>
-    <div class="about-hero-content">
-        <h1><?php echo esc_html( sportnza_t( 'Where Every Game is Yours to Command.' ) ); ?></h1>
-        <a href="#" class="btn btn-green btn-large btn-skew"><span><?php echo esc_html( sportnza_t( 'Play Now' ) ); ?></span></a>
+
+    <div class="container">
+        <div class="about-hero-content">
+            <h1><?php echo esc_html( sportnza_t( 'Where Every Game is Yours to Command.' ) ); ?></h1>
+            <a href="https://sportaza.com/gc/" class="btn btn-green btn-large btn-skew" target="_blank" rel="noopener">
+                <span><?php echo esc_html( sportnza_t( 'Play Now' ) ); ?></span>
+            </a>
+        </div>
     </div>
 </section>
 
@@ -55,7 +60,6 @@ get_header();
                 <nav class="about-sidebar-nav">
                     <h3><?php echo esc_html( sportnza_t( 'Pages' ) ); ?></h3>
                     <ul>
-                        <li><a href="#"><?php echo esc_html( sportnza_t( 'FAQ' ) ); ?></a></li>
                         <li><a href="<?php echo esc_url( get_permalink() ); ?>" class="active"><?php echo esc_html( sportnza_t( 'About Us' ) ); ?></a></li>
                     </ul>
                 </nav>
